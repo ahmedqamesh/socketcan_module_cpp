@@ -1,6 +1,5 @@
 // Copyright 2012 CrossControl
 #include "CanWorkerThread.h"
-#include "CanWrapper.h"
 #include <string.h>
 #include <string>
 #include <sys/types.h>
@@ -28,18 +27,20 @@ using namespace std;
 // Parameter:
 // wrapper - pointer to CAN wrapper instance
 
-void CanWorkerThread::Init()
-{	printf("Starting CANthread.....");
-    m_running = true;
-    //CanWrapper m_can;
 
+// Setup worker thread
+// Parameter:
+// wrapper - pointer to CAN wrapper instance
+void CanWorkerThread::Init(CanWrapper *wrapper)
+{
+    m_running = true;
+    m_can = wrapper;
 }
 
 // This function will be excuted in an own thread when start is called from parent thread
 // It will wait for data from CAN (blocking) and signal to GUI when data arrives
 void CanWorkerThread::run(int n, bool extended, bool rtr, int errorCode)
-{	CanWrapper can_m;
-	int retval;
+{	int retval;
 	int recvbytes = 0;
 	int read_can_port;
 	struct can_frame frame;
@@ -49,7 +50,7 @@ void CanWorkerThread::run(int n, bool extended, bool rtr, int errorCode)
     tv.tv_usec = 0;
     	read_can_port = 1;
     	while (read_can_port<n) {
-    		recvbytes = can_m.GetMsg(frame, extended, rtr, error, errorCode, tv);
+    		recvbytes = m_can->GetMsg(frame, extended, rtr, error, errorCode, tv);
     		if (recvbytes) {
     			if (error)   // Error frame
     			{

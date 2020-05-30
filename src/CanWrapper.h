@@ -4,7 +4,6 @@
  *  Created on: May 26, 2020
  *      Author: dcs
  */
-
 #ifndef CANWRAPPER_H_
 #define CANWRAPPER_H_
 #include <string.h>
