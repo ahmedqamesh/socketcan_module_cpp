@@ -1,5 +1,9 @@
-// Copyright 2012 CrossControl
-
+/*
+ * CanWrapper.h
+ *
+ *  Created on: May 26, 2020
+ *      Author: dcs
+ */
 #ifndef CANWORKERTHREAD_H
 #define CANWORKERTHREAD_H
 

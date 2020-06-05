@@ -1,6 +1,6 @@
 /* A simple SocketCAN example */
 /* root -l MainWindow.cpp */
-// g++ -std=c++11 MainWindow.cpp -o mainWindow
+// g++ -std=c++11 -o mainWindow MainWindow.cpp[or clang++ -o mainWindow MainWindow.cpp]
 // ./mainWindow
 #include <stdio.h>
 #include <string.h>
@@ -15,31 +15,25 @@
 #include <linux/can/raw.h>
 #include "src/CanWrapper.cpp"
 #include "src/CanWorkerThread.cpp"
-int soc;
-struct can_frame frame;
-struct sockaddr_can addr; // has an interface index like the  PF_PACKET socket, that also binds to a specific interface:
-struct ifreq ifr;
 #include <iostream>
 #include <cstdio>
 #include<stdio.h>
 #include<stdlib.h>
 using namespace std;
 
+int soc;
+struct can_frame frame;
+struct sockaddr_can addr; // has an interface index like the  PF_PACKET socket, that also binds to a specific interface:
+struct ifreq ifr;
+
 int main(void) {
 	CanWrapper* can = new CanWrapper();
 	CanWorkerThread* thread = new CanWorkerThread();
 	int errorCode;
 	int retval;
-	int recvbytes = 0;
-	int read_can_port;
-	struct can_frame frame;
-	struct timeval tv;
-
-	bool extended;
+	bool extended ;
+	extended = false;
 	bool rtr;
-	bool error;
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
 	frame.can_dlc = 8; // Set data length
 	frame.can_id = 0x601; // Set id
 	// Set data elements
@@ -51,6 +45,7 @@ int main(void) {
 	frame.data[5] = 0;
 
 	can->Init("can0", errorCode);
+
 	// Send CAN message on socket CAN
 	retval = can->SendMsg(frame, extended, rtr, errorCode);
 
@@ -58,7 +53,7 @@ int main(void) {
 	if (!retval) printf("Could not send CAN message. Error code:%d\n", errorCode);
 	//read messages from the thread
 	thread->Init(can);
-	thread->run(3, extended, rtr, errorCode);
+	thread->run(10, extended, rtr, errorCode);
 	thread->shutDown();
 return 0;
 }

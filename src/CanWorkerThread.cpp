@@ -1,4 +1,9 @@
-// Copyright 2012 CrossControl
+/*
+ * CanWrapper.h
+ *
+ *  Created on: May 26, 2020
+ *      Author: dcs
+ */
 #include "CanWorkerThread.h"
 #include <string.h>
 #include <string>
@@ -43,29 +48,29 @@ void CanWorkerThread::run(int n, bool extended, bool rtr, int errorCode)
 {	int retval;
 	int recvbytes = 0;
 	int read_can_port;
-	struct can_frame frame;
+	struct can_frame msg;
 	struct timeval tv;
 	bool error;
     tv.tv_sec = 1;
     tv.tv_usec = 0;
     	read_can_port = 1;
     	while (read_can_port<n) {
-    		recvbytes = m_can->GetMsg(frame, extended, rtr, error, errorCode, tv);
+    		recvbytes = m_can->GetMsg(msg, extended, rtr, error, errorCode, tv);
     		if (recvbytes) {
     			if (error)   // Error frame
     			{
-    				printf("Error frame received, class = %d\n", frame.can_id);
+    				printf("Error frame received, class = %d\n", msg.can_id);
     			} else if (extended)   // Extended frame
     			{
     				printf("Extended Frame msg........\n");
     				if (rtr) {
-    					printf("RTR ID: %d LENGTH: %d\n", frame.can_id,
-    							frame.can_dlc);
+    					printf("RTR ID: %d LENGTH: %d\n", msg.can_id,
+    							msg.can_dlc);
     				} else {
-    					printf("ID: %d LENGTH: %d  DATA:\n", frame.can_id,
-    							frame.can_dlc);
-    					for (int i = 0; i <= frame.can_dlc; i++) {
-    						printf(" DATA[%i]:%i\n",i, frame.data[i]);
+    					printf("ID: %d LENGTH: %d  DATA:\n", msg.can_id,
+    							msg.can_dlc);
+    					for (int i = 0; i <= msg.can_dlc; i++) {
+    						printf(" DATA[%i]:%i\n",i, msg.data[i]);
     					}
 
     				}
@@ -73,13 +78,13 @@ void CanWorkerThread::run(int n, bool extended, bool rtr, int errorCode)
     			{
     				printf("Standard Frame msg........\n");
     				if (rtr) {
-    					printf("RTR ID: %d LENGTH: %d\n", frame.can_id,
-    							frame.can_dlc);
+    					printf("RTR ID: %d LENGTH: %d\n", msg.can_id,
+    							msg.can_dlc);
     				} else {
-    					printf("ID: %d LENGTH: %d \n", frame.can_id,
-    							frame.can_dlc);
-    					for (int i = 0; i <= frame.can_dlc; i++) {
-    						printf(" DATA[%i]:%i\n",i, frame.data[i]);
+    					printf("ID: %d LENGTH: %d \n", msg.can_id,
+    							msg.can_dlc);
+    					for (int i = 0; i <= msg.can_dlc; i++) {
+    						printf(" DATA[%i]:%i\n",i, msg.data[i]);
     					}
 
     				}
