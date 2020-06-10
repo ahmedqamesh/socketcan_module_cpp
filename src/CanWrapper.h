@@ -13,17 +13,17 @@ class CanWrapper
 public:
     CanWrapper();
 
-    bool Init(const char *interfaceName, int &errorCode);
+    bool openPort(const char *interfaceName, int &errorCode);
 
-    void Close();
+    void closePort();
 
-    bool SendMsg(struct can_frame msg, bool extended, bool rtr, int &errorCode);
+    bool writeCanMessage(int cobid, int msg [], int dlc, bool extended, bool rtr_frame, int &errorCode);
 
-    bool GetMsg(struct can_frame &frame, bool &extended, bool &rtr, bool &error, int &errorCode, struct timeval timeout);
+    bool readCanMessages(bool &extended, bool &rtr, bool &error, int &errorCode, struct timeval timeout);
+    bool sdoRead( int nodeId, int index, int subindex,struct timeval timeout, int dlc);
+    bool setRecvBufferSize(int size);
 
-    bool SetRecvBufferSize(int size);
-
-    void EnableErrorMessages();
+    void enableErrorMessages();
 
 private:
     bool m_initialized; // indicates if socket is initialized

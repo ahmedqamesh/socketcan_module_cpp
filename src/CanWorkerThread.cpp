@@ -5,26 +5,25 @@
  *      Author: dcs
  */
 #include "CanWorkerThread.h"
-#include <string.h>
-#include <string>
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <iostream>
+#include <fcntl.h>
 #include <sys/ioctl.h>
-#include <sys/uio.h>
-#include <net/if.h>
-#include <linux/can.h>
-#include <linux/can/raw.h>
+#include <sys/socket.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <signal.h>
+#include <net/if.h>
+#include <linux/can.h> // includes The basic CAN frame structure and the sockaddr structure
+#include <linux/can/raw.h>
+#include <sys/types.h>
+#include <sys/uio.h>
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <signal.h>
+#include <linux/can/error.h>
 #include <sys/time.h>
-#include <iostream>
-#include <cstdio>
-#include<stdio.h>
-#include<stdlib.h>
+#include <sys/select.h>
 
 using namespace std;
 
@@ -36,7 +35,7 @@ using namespace std;
 // Setup worker thread
 // Parameter:
 // wrapper - pointer to CAN wrapper instance
-void CanWorkerThread::Init(CanWrapper *wrapper)
+void CanWorkerThread::init(CanWrapper *wrapper)
 {
     m_running = true;
     m_can = wrapper;
@@ -44,47 +43,47 @@ void CanWorkerThread::Init(CanWrapper *wrapper)
 
 // This function will be excuted in an own thread when start is called from parent thread
 // It will wait for data from CAN (blocking) and signal to GUI when data arrives
-void CanWorkerThread::run(int n, bool extended, bool rtr, int errorCode)
-{	int retval;
+void CanWorkerThread::run(int n,  bool extended, bool rtr_frame, int errorCode)
+{
 	int recvbytes = 0;
 	int read_can_port;
-	struct can_frame msg;
+	struct can_frame frame;
 	struct timeval tv;
-	bool error;
+	bool messageValid;
     tv.tv_sec = 1;
     tv.tv_usec = 0;
     	read_can_port = 1;
     	while (read_can_port<n) {
-    		recvbytes = m_can->GetMsg(msg, extended, rtr, error, errorCode, tv);
+    		recvbytes = m_can->readCanMessages(extended, rtr_frame, messageValid, errorCode, tv);
     		if (recvbytes) {
-    			if (error)   // Error frame
+    			if (messageValid)   // Error frame
     			{
-    				printf("Error frame received, class = %d\n", msg.can_id);
+    				printf("Error frame received, class = %d\n", frame.can_id);
     			} else if (extended)   // Extended frame
     			{
-    				printf("Extended Frame msg........\n");
-    				if (rtr) {
-    					printf("RTR ID: %d LENGTH: %d\n", msg.can_id,
-    							msg.can_dlc);
+    				printf("Extended Frame frame........\n");
+    				if (rtr_frame) {
+    					printf("rtr_frame ID: %d LENGTH: %d\n", frame.can_id,
+    							frame.can_dlc);
     				} else {
-    					printf("ID: %d LENGTH: %d  DATA:\n", msg.can_id,
-    							msg.can_dlc);
-    					for (int i = 0; i <= msg.can_dlc; i++) {
-    						printf(" DATA[%i]:%i\n",i, msg.data[i]);
+    					printf("ID: %d LENGTH: %d  DATA:\n", frame.can_id,
+    							frame.can_dlc);
+    					for (int i = 0; i <= frame.can_dlc; i++) {
+    						printf(" DATA[%i]:%i\n",i, frame.data[i]);
     					}
 
     				}
     			} else    // Standard frame
     			{
-    				printf("Standard Frame msg........\n");
-    				if (rtr) {
-    					printf("RTR ID: %d LENGTH: %d\n", msg.can_id,
-    							msg.can_dlc);
+    				printf("Standard Frame frame........\n");
+    				if (rtr_frame) {
+    					printf("rtr_frame ID: %d LENGTH: %d\n", frame.can_id,
+    							frame.can_dlc);
     				} else {
-    					printf("ID: %d LENGTH: %d \n", msg.can_id,
-    							msg.can_dlc);
-    					for (int i = 0; i <= msg.can_dlc; i++) {
-    						printf(" DATA[%i]:%i\n",i, msg.data[i]);
+    					printf("ID: %d LENGTH: %d \n", frame.can_id,
+    							frame.can_dlc);
+    					for (int i = 0; i <= frame.can_dlc; i++) {
+    						printf(" DATA[%i]:%i\n",i, frame.data[i]);
     					}
 
     				}

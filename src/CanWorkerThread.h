@@ -14,9 +14,9 @@ class CanWorkerThread
 
 public:
 
-	void Init(CanWrapper *wrapper); // Initialize
+	void init(CanWrapper *wrapper); // Initialize
 
-    void run(int n, bool extended, bool rtr, int errorCode);         // start thread
+    void run(int n,  bool extended, bool rtr_frame, int errorCode);         // start thread
 
     void shutDown();    // Make thread shut down
 
