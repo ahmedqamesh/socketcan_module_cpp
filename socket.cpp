@@ -1,11 +1,11 @@
 /* A simple SocketCAN example */
-// g++ -std=c++11 socket.cpp -o socket
+// g++ -std=c++11 socket.cpp -o socket [clang++ -o socket socket.cpp]
 // ./socket
 //https://linuxhostsupport.com/blog/how-to-install-gcc-on-centos-7/
 #include <stdio.h>
 #include <string.h>
 #include <iostream>
-//#include <string>
+#include <string.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -57,17 +57,18 @@ int open_port(const char *port) {
 	return 0;
 }
 
-int send_port() {
+int send_port(int cobid, int msg[], int dlc) {
 	printf("Writing CAN frames.... \n");
-	socklen_t len = sizeof(addr);
-	frame.can_id = 0x601;
-	frame.can_dlc = 8;
-	frame.data[0] = 64;
-	frame.data[1] = 0;
-	frame.data[2] = 16;
-	frame.data[3] = 0;
-	frame.data[4] = 0;
-	frame.data[5] = 0;
+	frame.can_id = cobid;
+	frame.can_dlc = dlc;
+	std::cout << std::hex << cobid;
+	printf(" [");
+	for (int i = 0; i <= frame.can_dlc; i++) {
+		frame.data[i] = msg[i];
+		printf(" %i",frame.data[i]);
+	}
+	printf("]\n");
+
 	int retval;
 	retval = write(soc, &frame, sizeof(struct can_frame));
 	printf("Received a CAN frame from interface %s\n", ifr.ifr_name);
@@ -85,9 +86,7 @@ void read_port() {
 	struct can_frame frame_rd;
 	int recvbytes = 0;
 	struct timeval tv;
-
 	read_can_port = 1;
-
 	while (read_can_port) {
 		struct timeval timeout = { 1, 0 };
 		fd_set readSet;
@@ -101,13 +100,15 @@ void read_port() {
 			if (FD_ISSET(soc, &readSet)) {
                 recvbytes = read(soc, &frame_rd, sizeof(struct can_frame));
             	ioctl(soc, SIOCGSTAMP, &tv);
-            	printf("ID = %d, dlc = %d\n", frame_rd.can_id, frame_rd.can_dlc);
+            	std::cout <<"ID:"<<std::hex << frame_rd.can_id;
+            	//printf("ID = %d, dlc = %d\n", frame_rd.can_id, frame_rd.can_dlc);
                 if(recvbytes)
                 {
-                	for (int i = 0; i<=frame_rd.can_dlc; i++){
-                		printf("DATA[%d] = %d\n",i,frame_rd.data[i]);
+                	printf(" Data: [");
+                	for (int i = 0; i <= frame_rd.can_dlc; i++) {
+                		std::cout <<std::hex << int(frame_rd.data[i])<<" ";
                 	}
-
+                	printf("], DLC:%i\n",frame_rd.can_dlc);
                 }
 			}
 		}
@@ -123,7 +124,9 @@ int close_port() {
 
 int main(void) {
 	open_port("can0");
-	send_port();
+	int dlc = 4;
+	int msg[] = {64,0,16,0,0,0,0,0};
+	send_port(0x601, msg, dlc);
 	read_port();
 	close_port();
 	return 0;

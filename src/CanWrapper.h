@@ -7,7 +7,8 @@
 #ifndef CANWRAPPER_H_
 #define CANWRAPPER_H_
 #include <string.h>
-
+#include <tuple>
+#include <vector>
 class CanWrapper
 {
 public:
@@ -16,11 +17,12 @@ public:
     bool openPort(const char *interfaceName, int &errorCode);
 
     void closePort();
+    bool writeCanMessage(int cobid, int msg [], int dlc, bool extended, bool rtr_frame, int &errorCode, struct timeval timeout);
 
-    bool writeCanMessage(int cobid, int msg [], int dlc, bool extended, bool rtr_frame, int &errorCode);
-
-    bool readCanMessages(bool &extended, bool &rtr, bool &error, int &errorCode, struct timeval timeout);
-    bool sdoRead( int nodeId, int index, int subindex,struct timeval timeout, int dlc);
+    //std::tuple<int, std::vector<int>, int>
+    std::tuple<int, std::vector<int>, int> canMsgQueue(int codid, std::vector<int> msg, int dlc);
+    bool readCanMessages(bool &extended, bool &rtr_frame, bool &error, int &errorCode, struct timeval timeout);
+    double sdoRead( int nodeId, int index, int subindex,struct timeval timeout, int dlc);
     bool setRecvBufferSize(int size);
 
     void enableErrorMessages();
@@ -29,7 +31,9 @@ private:
     bool m_initialized; // indicates if socket is initialized
 
     int m_socket;       // Socket
-
+    std::tuple<int, std::vector<int>, int> GeneratedMessage;
+    bool messageValid;
+    bool gotMessage;
 };
 
 #endif /* CANWRAPPER_H_ */
