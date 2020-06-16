@@ -31,7 +31,10 @@
 #include <algorithm>
 #include <vector>
 #include <bitset>
-
+#include <cstdlib> // for EXIT_SUCCESS and EXIT_FAILURE
+#include <iomanip>
+#include <sstream>
+#include <string>
 #define INVALID_SOCKET -1
 
 /* Helper functions */
@@ -41,9 +44,11 @@ void errExit(char* msg) {
 }
 
 CanWrapper::CanWrapper() {
+	sdoData = 0;
+	messageValid = false;
 	m_initialized = false;
-	gotMessage = false;
 	m_socket = INVALID_SOCKET;
+	gotMessage = false;
 	std::vector<int> msg;
 	GeneratedMessage = make_tuple(0, msg, 0);
 }
@@ -58,8 +63,7 @@ bool CanWrapper::openPort(const char *interfaceName, int &errorCode) {
 	int ret;
 
 	errorCode = 0;
-	printf(
-			"Opening an empty socket API socket with PF_CAN as the protocol family\n");
+	printf("Opening an empty socket API socket with PF_CAN as the protocol family\n");
 	m_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
 
 	// Get index for a certain name
@@ -175,7 +179,6 @@ bool CanWrapper::writeCanMessage(int cobid, int msg[], int dlc, bool extended,
 //#define EAGAIN          11      /* Try again - no data available*/
 //#define EBADF            9      /* Bad file number - can net not opened */
 // timeout - GetMsg will return false after timeout period
-//std::tuple<int, std::vector<int>, int>
 std::tuple<int, std::vector<int>, int> CanWrapper::canMsgQueue(int codid,
 		std::vector<int> msg, int dlc) {
 	return std::make_tuple(codid, msg, dlc);
@@ -187,8 +190,6 @@ bool CanWrapper::readCanMessages(bool &extended, bool &rtr_frame, bool &error,
 	struct can_frame frame_rd;
 	int bytesRead;
 	int ret;
-	int dlc = frame_rd.can_dlc;
-
 	fd_set rfds;
 	errorCode = 0;
 
@@ -256,7 +257,7 @@ bool CanWrapper::readCanMessages(bool &extended, bool &rtr_frame, bool &error,
 	}
 	return false;
 }
-double CanWrapper::sdoRead(int nodeId, int index, int subindex,
+bool CanWrapper::sdoRead(int nodeId, int index, int subindex,
 		struct timeval timeout, int dlc) {
 	/*
 	 Read an object via |SDO|
@@ -284,14 +285,13 @@ double CanWrapper::sdoRead(int nodeId, int index, int subindex,
 	 In case of errors
 	 */
 	printf("Reading an object via |SDO|\n");
-	int recvbytes = 0;
 	int errorCode;
 	bool extended;
+	bool output =false;
 	bool error;
 	extended = false;
 	bool rtr_frame = false;
 	int retval;
-	struct can_frame frame;
 	int SDO_TX = 0x580;
 	int SDO_RX = 0x600;
 	int Byte0, Byte1, Byte2, Byte3;
@@ -299,7 +299,6 @@ double CanWrapper::sdoRead(int nodeId, int index, int subindex,
 		printf("SDO read protocol cancelled before it could begin\n");
 		//return false;
 	};
-	double return_value;
 	int cobid = SDO_RX + nodeId;
 	Byte0 = 0x40;
 	Byte1 = static_cast<unsigned char>((index & 0x00FF));
@@ -307,15 +306,13 @@ double CanWrapper::sdoRead(int nodeId, int index, int subindex,
 	Byte3 = subindex;
 	int msg[8] = { Byte0, Byte1, Byte2, Byte3, 0, 0, 0, 0 };
 	printf("Send SDO read request to node %i\n", nodeId);
-	retval = CanWrapper::writeCanMessage(cobid, msg, dlc, extended, rtr_frame, errorCode,
-			timeout);
+	retval = CanWrapper::writeCanMessage(cobid, msg, dlc, extended, rtr_frame, errorCode, timeout);
 	if (!retval){
 		printf("Could not send CAN message. Error code:%d\n", errorCode);
-		//return false;
+		output =false;
 	}
 	else{
 		CanWrapper::readCanMessages(extended, rtr_frame, error, errorCode, timeout);
-		messageValid = false;
 		if (gotMessage) {
 			int cobid_ret = std::get<0>(GeneratedMessage);
 			std::vector<int> ret = std::get<1>(GeneratedMessage);
@@ -339,14 +336,17 @@ double CanWrapper::sdoRead(int nodeId, int index, int subindex,
 				std::cout <<"Got Data: [";
 				for (int i = 0; i <nDatabytes; i++)std::cout <<ret.at(4 + i)<<" ";
 				std::cout << "]"<<"\n";
-				return_value = (((int32_t)ret.at(4 + 3)) << 24) | (((int32_t)ret.at(4 + 2)) << 16) | (((int32_t)ret.at(4 + 1)) << 8) | ((int32_t)ret.at(4 + 0));
+				sdoData = (((int32_t)ret.at(4 + 3)) << 24) | (((int32_t)ret.at(4 + 2)) << 16) | (((int32_t)ret.at(4 + 1)) << 8) | ((int32_t)ret.at(4 + 0));
+				CanWrapper::setSdoData(sdoData);
+				output =true;
 			}else {
-						messageValid =false;
-						std::cout << "SDO read response timeout (node:" << nodeId <<", index:"<< std::hex<<index<<", subindex:"<< std::hex<<subindex<<")\n";
-				}
+				messageValid =false;
+				std::cout << "SDO read response timeout (node:" << nodeId <<", index:"<< std::hex<<index<<", subindex:"<< std::hex<<subindex<<")\n";
+				output =false;
+			}
 		}
 	}
-	return return_value;
+	return output;
 }
 
 // Set size of receive buffer. The standard size is usually large enough.
@@ -358,12 +358,12 @@ bool CanWrapper::setRecvBufferSize(int size) {
 	int ret;
 	int rcvbuf_size = size;
 
-//    int rbuf;
-//    int len = sizeof(int);
+	//    int rbuf;
+	//    int len = sizeof(int);
 
-// Print receive buf size before change
-//    ret = getsockopt(m_socket,SOL_SOCKET,SO_RCVBUF,&rbuf,(socklen_t*)&len);
-//    printf("receive buf size is before change: %d\r\n", rbuf);
+	// Print receive buf size before change
+	//    ret = getsockopt(m_socket,SOL_SOCKET,SO_RCVBUF,&rbuf,(socklen_t*)&len);
+	//    printf("receive buf size is before change: %d\r\n", rbuf);
 
 	ret = setsockopt(m_socket, SOL_SOCKET, SO_RCVBUF, &rcvbuf_size,
 			sizeof(rcvbuf_size));
@@ -375,8 +375,8 @@ bool CanWrapper::setRecvBufferSize(int size) {
 	}
 
 	// Print receive buf size after change
-//    ret = getsockopt(m_socket,SOL_SOCKET,SO_RCVBUF,&rbuf,(socklen_t*)&len);
-//    printf("receive buf size is after change: %d\r\n", rbuf);
+	//    ret = getsockopt(m_socket,SOL_SOCKET,SO_RCVBUF,&rbuf,(socklen_t*)&len);
+	//    printf("receive buf size is after change: %d\r\n", rbuf);
 
 	return true;
 }
@@ -396,3 +396,17 @@ void CanWrapper::enableErrorMessages() {
 
 	}
 }
+
+std::string CanWrapper::intToHexString(int intValue) {
+    std::string hexStr;
+    /// integer value to hex-string
+    std::stringstream sstream;
+    sstream<< std::setfill ('0') << std::setw(2)
+    << std::hex << (int)intValue;
+
+    hexStr= sstream.str();
+    sstream.clear();    //clears out the stream-string
+
+    return hexStr;
+}
+
