@@ -1,0 +1,3 @@
+/home/dcs/git/SocketCAN-cpp/_install/bin/mainWindow
+/home/dcs/git/SocketCAN-cpp/_install/include/CanWrapper.h
+/home/dcs/git/SocketCAN-cpp/_install/src/CanWrapper.cpp

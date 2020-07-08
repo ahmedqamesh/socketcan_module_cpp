@@ -1,0 +1,8 @@
+/home/dcs/git/SocketCAN-cpp/build/CMakeFiles/install/strip.dir
+/home/dcs/git/SocketCAN-cpp/build/CMakeFiles/install/local.dir
+/home/dcs/git/SocketCAN-cpp/build/CMakeFiles/install.dir
+/home/dcs/git/SocketCAN-cpp/build/CMakeFiles/list_install_components.dir
+/home/dcs/git/SocketCAN-cpp/build/CMakeFiles/rebuild_cache.dir
+/home/dcs/git/SocketCAN-cpp/build/CMakeFiles/edit_cache.dir
+/home/dcs/git/SocketCAN-cpp/build/CMakeFiles/CanWrapper.dir
+/home/dcs/git/SocketCAN-cpp/build/CMakeFiles/mainWindow.dir

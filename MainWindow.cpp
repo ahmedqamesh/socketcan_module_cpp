@@ -1,6 +1,6 @@
 /* A simple SocketCAN example */
 /* root -l MainWindow.cpp */
-// g++ -std=c++11 -o mainWindow MainWindow.cpp[or clang++ -o mainWindow MainWindow.cpp] [clang++ -std=c++11 -o mainWindow MainWindow.cpp]
+// g++ -std=c++11 -o mainWindow MainWindow.cpp  [clang++ -std=c++11 -o mainWindow MainWindow.cpp]
 // ./mainWindow
 #include <stdio.h>
 #include <string.h>
@@ -13,7 +13,7 @@
 #include <net/if.h>
 #include <linux/can.h> // includes The basic CAN frame structure and the sockaddr structure
 #include <linux/can/raw.h>
-#include "src/CanWrapper.cpp"
+#include "CanWrapper.cpp"
 #include <iostream>
 #include <cstdio>
 #include<stdio.h>
@@ -55,7 +55,7 @@ int main(void) {
 	//write sdo message
     printf("Writing example CAN Expedited read message ...\n");
     //Example (1): get node Id
-    std::stringstream stream;
+    //std::stringstream stream;
      while (true){
 		 output = can->sdoRead(nodeId,index,subindex,timeout,dlc);
 		if (output){
