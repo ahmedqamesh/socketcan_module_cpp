@@ -13,20 +13,20 @@ The provided code establishes communication with a CAN device and sends a Servic
 
 ## Installation
 1. Clone this repository to your local machine:
-'''
+```
 git clone https://github.com/example/socketcan-cpp-example.git
-'''
+```
 2. Compile the code using a C++ compiler with C++11 support:
-'''
+```
 g++ -std=c++11 -o main main.cpp CanWrapper.cpp
-'''
+```
 **Note:** The following Twiki might be useful https://linuxhint.com/install_llvm_centos7/
 
 ## Usage
 1. Run the compiled executable:
-'''
+```
 ./main
-'''
+```
 2. The program will attempt to read data from the CAN device and print the retrieved data to the console.
 
 ## Configuration
